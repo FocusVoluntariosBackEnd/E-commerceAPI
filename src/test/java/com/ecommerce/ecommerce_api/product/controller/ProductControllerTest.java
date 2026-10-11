@@ -52,7 +52,6 @@ class ProductControllerTest {
                 10, "Eletrônicos", Instant.now(), Instant.now());
     }
 
-    // ---------- criação ----------
 
     @Test
     void create_withValidBody_shouldReturn201() throws Exception {
@@ -124,7 +123,6 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // ---------- listagem e busca ----------
 
     @Test
     void list_shouldReturn200() throws Exception {
@@ -148,7 +146,6 @@ class ProductControllerTest {
         verify(service).list(2, 5, "mouse");
     }
 
-    // ---------- remoção ----------
 
     @Test
     void delete_shouldReturn204() throws Exception {

@@ -42,7 +42,6 @@ class ProductServiceTest {
         return new Product("Mouse", "Mouse sem fio", new BigDecimal("59.90"), 10, category);
     }
 
-    // ---------- criação ----------
 
     @Test
     void create_shouldPersistAndReturnProduct() {
@@ -72,7 +71,6 @@ class ProductServiceTest {
         verify(productRepository, never()).saveAndFlush(any());
     }
 
-    // ---------- listagem e busca ----------
 
     @Test
     void list_withoutSearch_shouldReturnOnlyActiveProducts() {
@@ -96,7 +94,6 @@ class ProductServiceTest {
         verify(productRepository).findByNameContainingIgnoreCaseAndActiveTrue(eq("mouse"), any(Pageable.class));
     }
 
-    // ---------- remoção ----------
 
     @Test
     void delete_shouldDeactivateProductInsteadOfRemovingIt() {
