@@ -48,7 +48,7 @@ public class Cart {
                     if(!product.isStockAvailable(newQuantity))
                         throw new RuntimeException("Insufficient stock to add to cart.");
 
-                    existingItem.addQuantity(quantity);
+                    existingItem.updateQuantity(newQuantity);
                 },
                 () -> {
                     if(!product.isStockAvailable(quantity))
@@ -57,6 +57,15 @@ public class Cart {
                     items.add(new CartItem(this, product, quantity));
                 }
         );
+    }
+
+    public void updateQuantityItem(Product product, int quantity) {
+        findItemByProductId(product.getId()).ifPresent(item -> {
+            if(!product.isStockAvailable(quantity))
+                throw new RuntimeException("Insufficient stock to add to cart.");
+
+            item.updateQuantity(quantity);
+        });
     }
 
     private Optional<CartItem> findItemByProductId(UUID productId) {

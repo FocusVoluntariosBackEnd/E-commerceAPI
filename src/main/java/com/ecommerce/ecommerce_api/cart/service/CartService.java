@@ -2,9 +2,11 @@ package com.ecommerce.ecommerce_api.cart.service;
 
 import com.ecommerce.ecommerce_api.cart.dto.AddCartItemRequest;
 import com.ecommerce.ecommerce_api.cart.dto.CartResponse;
+import com.ecommerce.ecommerce_api.cart.dto.UpdateCartItemQuantityRequest;
 import com.ecommerce.ecommerce_api.cart.entity.Cart;
 import com.ecommerce.ecommerce_api.cart.entity.CartItem;
 import com.ecommerce.ecommerce_api.cart.repository.CartRepository;
+import com.ecommerce.ecommerce_api.product.dto.UpdateProductRequest;
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.product.repository.ProductRepository;
 import com.ecommerce.ecommerce_api.user.entity.User;
@@ -38,6 +40,21 @@ public class CartService {
     }
 
     @Transactional
+    public CartResponse updateQuantityCartItem(UUID userId, UUID productId, UpdateCartItemQuantityRequest request) {
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found."));
+
+        Product product = productRepository.findByIdAndActiveTrue(productId)
+                        .orElseThrow(() -> new RuntimeException("Product not found."));
+
+        cart.updateQuantityItem(product, request.quantity());
+
+        cartRepository.save(cart);
+
+        return CartResponse.toResponse(cart);
+    }
+
+    @Transactional
     public CartResponse getCart(UUID userId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseGet(() -> createCart(userId));
@@ -49,6 +66,6 @@ public class CartService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
-        return cartRepository.saveAndFlush(new Cart(user));
+        return cartRepository.save(new Cart(user));
     }
 }
