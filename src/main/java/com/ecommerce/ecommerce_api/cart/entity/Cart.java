@@ -2,9 +2,11 @@ package com.ecommerce.ecommerce_api.cart.entity;
 
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "carts")
+@Getter
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -49,6 +52,10 @@ public class Cart {
 
         item.setCart(this);
     }
+
+    public BigDecimal getTotal() {
+        return items.stream()
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
-
-
