@@ -2,12 +2,14 @@ package com.ecommerce.ecommerce_api.cart.entity;
 
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
 @Table(name = "cart_items")
+@Getter
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -50,5 +52,9 @@ public class CartItem {
 
     public void setCart(Cart cart) {
         this.cart = cart;
+    }
+
+    public BigDecimal getSubtotal() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 }
