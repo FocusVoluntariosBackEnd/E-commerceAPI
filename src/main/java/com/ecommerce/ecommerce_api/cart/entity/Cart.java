@@ -1,5 +1,6 @@
 package com.ecommerce.ecommerce_api.cart.entity;
 
+import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,9 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "carts")
@@ -38,19 +37,36 @@ public class Cart {
     protected Cart() {}
 
     public Cart(User user) {
-        if (user == null)
-            throw new IllegalArgumentException("User can't be null");
-
         this.user = user;
     }
 
-    public void AddItem(CartItem item) {
-        if (item == null)
-            throw new IllegalArgumentException("Item can't be null");
+    public void addItem(Product product, int quantity) {
+        findItemByProductId(product.getId()).ifPresentOrElse(
+                existingItem -> {
+                    int newQuantity = existingItem.getQuantity() + quantity;
 
-        this.items.add(item);
+                    if(!product.isStockAvailable(newQuantity))
+                        throw new RuntimeException("Insufficient stock to add to cart.");
 
-        item.setCart(this);
+                    existingItem.addQuantity(quantity);
+                },
+                () -> {
+                    if(!product.isStockAvailable(quantity))
+                        throw new RuntimeException("Insufficient stock to add to cart.");
+
+                    items.add(new CartItem(this, product, quantity));
+                }
+        );
+    }
+
+    private Optional<CartItem> findItemByProductId(UUID productId) {
+        return items.stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst();
+    }
+
+    public List<CartItem> getItems() {
+        return Collections.unmodifiableList(items);
     }
 
     public BigDecimal getTotal() {

@@ -1,11 +1,12 @@
 package com.ecommerce.ecommerce_api.cart.controller;
 
+import com.ecommerce.ecommerce_api.cart.dto.AddCartItemRequest;
 import com.ecommerce.ecommerce_api.cart.dto.CartResponse;
 import com.ecommerce.ecommerce_api.cart.service.CartService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -17,6 +18,17 @@ public class CartController {
 
     public CartController(CartService service) {
         this.service = service;
+    }
+
+    @PostMapping("/items")
+    public ResponseEntity<CartResponse> addItem(Principal principal,
+                                                @Valid @RequestBody AddCartItemRequest request) {
+        CartResponse response = service.addItem(
+                UUID.fromString(principal.getName()),
+                request
+                );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping

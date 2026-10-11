@@ -59,6 +59,10 @@ public class Product {
         this.category = category;
     }
 
+    public boolean isStockAvailable(int quantity) {
+        return this.stock >= quantity;
+    }
+
     public void updateProduct(String name, String description, BigDecimal price, int stock, Category category, long requestVersion) {
         if (!this.active)
             throw new IllegalStateException("This product is inactive and cannot be updated.");
