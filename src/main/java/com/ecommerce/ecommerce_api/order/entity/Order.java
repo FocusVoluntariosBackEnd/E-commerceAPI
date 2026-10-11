@@ -2,6 +2,7 @@ package com.ecommerce.ecommerce_api.order.entity;
 
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
+@Getter
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
