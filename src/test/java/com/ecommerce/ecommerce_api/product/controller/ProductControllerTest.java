@@ -2,15 +2,15 @@ package com.ecommerce.ecommerce_api.product.controller;
 
 import com.ecommerce.ecommerce_api.product.dto.ProductResponse;
 import com.ecommerce.ecommerce_api.product.service.ProductService;
+import com.ecommerce.ecommerce_api.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.ecommerce.ecommerce_api.security.SecurityConfig;
-import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -52,6 +52,8 @@ class ProductControllerTest {
                 10, "Eletrônicos", Instant.now(), Instant.now());
     }
 
+    // ---------- criação ----------
+
     @Test
     void create_withValidBody_shouldReturn201() throws Exception {
         when(service.create(any())).thenReturn(sampleResponse());
@@ -68,6 +70,17 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("\"  \"", "59.90", "10", "\"" + CATEGORY_ID + "\"")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void create_withMissingName_shouldReturn400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("null", "59.90", "10", "\"" + CATEGORY_ID + "\"")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -80,10 +93,26 @@ class ProductControllerTest {
     }
 
     @Test
+    void create_withMissingPrice_shouldReturn400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("\"Mouse\"", "null", "10", "\"" + CATEGORY_ID + "\"")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void create_withNegativeStock_shouldReturn400() throws Exception {
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("\"Mouse\"", "59.90", "-5", "\"" + CATEGORY_ID + "\"")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void create_withMissingStock_shouldReturn400() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("\"Mouse\"", "59.90", "null", "\"" + CATEGORY_ID + "\"")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -95,6 +124,8 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // ---------- listagem e busca ----------
+
     @Test
     void list_shouldReturn200() throws Exception {
         when(service.list(1, 10, null)).thenReturn(new PageImpl<>(List.of(sampleResponse())));
@@ -103,6 +134,21 @@ class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Mouse"));
     }
+
+    @Test
+    void list_shouldForwardPaginationAndSearchParams() throws Exception {
+        when(service.list(2, 5, "mouse")).thenReturn(new PageImpl<>(List.of(sampleResponse())));
+
+        mockMvc.perform(get("/api/products")
+                        .param("page", "2")
+                        .param("limit", "5")
+                        .param("search", "mouse"))
+                .andExpect(status().isOk());
+
+        verify(service).list(2, 5, "mouse");
+    }
+
+    // ---------- remoção ----------
 
     @Test
     void delete_shouldReturn204() throws Exception {

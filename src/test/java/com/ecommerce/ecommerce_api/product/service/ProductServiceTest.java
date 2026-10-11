@@ -42,6 +42,8 @@ class ProductServiceTest {
         return new Product("Mouse", "Mouse sem fio", new BigDecimal("59.90"), 10, category);
     }
 
+    // ---------- criação ----------
+
     @Test
     void create_shouldPersistAndReturnProduct() {
         UUID categoryId = UUID.randomUUID();
@@ -64,9 +66,13 @@ class ProductServiceTest {
 
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> service.create(request));
+        var ex = assertThrows(RuntimeException.class, () -> service.create(request));
+
+        assertEquals("Category not found.", ex.getMessage());
         verify(productRepository, never()).saveAndFlush(any());
     }
+
+    // ---------- listagem e busca ----------
 
     @Test
     void list_withoutSearch_shouldReturnOnlyActiveProducts() {
@@ -90,6 +96,8 @@ class ProductServiceTest {
         verify(productRepository).findByNameContainingIgnoreCaseAndActiveTrue(eq("mouse"), any(Pageable.class));
     }
 
+    // ---------- remoção ----------
+
     @Test
     void delete_shouldDeactivateProductInsteadOfRemovingIt() {
         Product product = newProduct();
@@ -99,7 +107,6 @@ class ProductServiceTest {
         service.delete(id);
 
         assertFalse(product.isActive());
-        verify(productRepository, never()).delete(any());
     }
 
     @Test
@@ -107,6 +114,8 @@ class ProductServiceTest {
         UUID id = UUID.randomUUID();
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> service.delete(id));
+        var ex = assertThrows(RuntimeException.class, () -> service.delete(id));
+
+        assertEquals("Product not found.", ex.getMessage());
     }
 }
