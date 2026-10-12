@@ -15,98 +15,64 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+        ProblemDetail problemDetail = buildProblemDetail(
                 HttpStatus.BAD_REQUEST,
+                "Invalid Request Data",
                 "There are invalid fields in the request."
         );
-        problemDetail.setTitle("Invalid Request Data");
 
         var errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .toList();
-        problemDetail.setProperty("invalidFields", errors);
-        problemDetail.setProperty("timestamp", Instant.now());
 
+        problemDetail.setProperty("invalidFields", errors);
         return problemDetail;
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoResourceFound(NoResourceFoundException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND,
-                "Resource not found."
-        );
-        problemDetail.setTitle("Not Found");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.NOT_FOUND, "Not Found", "Resource not found.");
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleNotFound(ResourceNotFoundException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND,
-                e.getMessage()
-        );
-        problemDetail.setTitle("Resource Not Found");
-        problemDetail.setProperty("timestamp", Instant.now());
-
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.NOT_FOUND, "Resource Not Found", e.getMessage());
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT,
-                e.getMessage()
-        );
-        problemDetail.setTitle("Conflict");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.CONFLICT, "Conflict", e.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.UNAUTHORIZED,
-                "Invalid credentials."
-        );
-        problemDetail.setTitle("Unauthorized");
-        problemDetail.setProperty("timestamp", Instant.now());
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials.");
     }
 
     @ExceptionHandler(BusinessRuleException.class)
     public ProblemDetail handleBusinessRule(BusinessRuleException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT,
-                e.getMessage()
-        );
-        problemDetail.setTitle("Business Rule Validation Error");
-        problemDetail.setProperty("timestamp", Instant.now());
-
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.CONFLICT, "Business Rule Validation Error", e.getMessage());
     }
 
     @ExceptionHandler(OptimisticLockingException.class)
     public ProblemDetail handleOptimisticLock(OptimisticLockingException e) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.CONFLICT,
-                e.getMessage()
-        );
-        problemDetail.setTitle("Concurrent Modification Conflict");
-        problemDetail.setProperty("timestamp", Instant.now());
-
-        return problemDetail;
+        return buildProblemDetail(HttpStatus.CONFLICT, "Concurrent Modification Conflict", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalError(Exception ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+        return buildProblemDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
                 "An unexpected internal server error occurred."
         );
-        problemDetail.setTitle("Internal Server Error");
+    }
+
+    private ProblemDetail buildProblemDetail(HttpStatus status, String title, String detail) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        problemDetail.setTitle(title);
         problemDetail.setProperty("timestamp", Instant.now());
+
         return problemDetail;
     }
 }
