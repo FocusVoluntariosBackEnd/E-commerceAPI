@@ -16,6 +16,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
     }
 
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardError> handleException(Exception e) {
         StandardError erro = new StandardError(500, "Ocorreu um erro Interno no servidor");

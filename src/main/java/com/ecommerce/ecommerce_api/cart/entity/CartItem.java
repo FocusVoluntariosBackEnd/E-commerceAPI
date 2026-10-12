@@ -46,4 +46,15 @@ public class CartItem {
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CartItem cartItem)) return false;
+        return Objects.equals(id, cartItem.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

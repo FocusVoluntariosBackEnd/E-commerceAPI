@@ -34,24 +34,25 @@ public class Cart {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    protected Cart() {}
+    protected Cart() {
+    }
 
     public Cart(User user) {
         this.user = user;
     }
 
     public void addItem(Product product, int quantity) {
-        findItemByProductId(product.getId()).ifPresentOrElse(
+        findItemByProduct(product).ifPresentOrElse(
                 existingItem -> {
                     int newQuantity = existingItem.getQuantity() + quantity;
 
-                    if(!product.isStockAvailable(newQuantity))
+                    if (!product.isStockAvailable(newQuantity))
                         throw new RuntimeException("Insufficient stock to add to cart.");
 
                     existingItem.updateQuantity(newQuantity);
                 },
                 () -> {
-                    if(!product.isStockAvailable(quantity))
+                    if (!product.isStockAvailable(quantity))
                         throw new RuntimeException("Insufficient stock to add to cart.");
 
                     items.add(new CartItem(this, product, quantity));
@@ -60,17 +61,27 @@ public class Cart {
     }
 
     public void updateQuantityItem(Product product, int quantity) {
-        findItemByProductId(product.getId()).ifPresent(item -> {
-            if(!product.isStockAvailable(quantity))
-                throw new RuntimeException("Insufficient stock to add to cart.");
+        findItemByProduct(product).ifPresentOrElse(
+                item -> {
+                    if (!product.isStockAvailable(quantity))
+                        throw new RuntimeException("Insufficient stock to add to cart.");
 
-            item.updateQuantity(quantity);
-        });
+                    item.updateQuantity(quantity);
+                },
+                () -> { throw new RuntimeException("Cart item not found."); }
+        );
     }
 
-    private Optional<CartItem> findItemByProductId(UUID productId) {
+    public void removeItem(Product product) {
+        findItemByProduct(product).ifPresentOrElse(
+                item -> items.remove(item),
+                () -> { throw new RuntimeException("Cart item not found."); }
+        );
+    }
+
+    private Optional<CartItem> findItemByProduct(Product product) {
         return items.stream()
-                .filter(i -> i.getProduct().getId().equals(productId))
+                .filter(i -> i.getProduct().equals(product))
                 .findFirst();
     }
 

@@ -62,6 +62,19 @@ public class CartService {
         return CartResponse.toResponse(cart);
     }
 
+    @Transactional
+    public void removeItem(UUID userId, UUID productId) {
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found."));
+
+        Product product = productRepository.findByIdAndActiveTrue(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found."));
+
+        cart.removeItem(product);
+
+        cartRepository.save(cart);
+    }
+
     private Cart createCart(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found."));
