@@ -2,6 +2,8 @@ package com.ecommerce.ecommerce_api.auth.controller;
 
 
 import com.ecommerce.ecommerce_api.auth.service.AuthService;
+import com.ecommerce.ecommerce_api.user.dto.LoginRequest;
+import com.ecommerce.ecommerce_api.user.dto.LoginResponse;
 import com.ecommerce.ecommerce_api.user.dto.RegisterRequestDTO;
 import com.ecommerce.ecommerce_api.user.dto.UserResponseDTO;
 import jakarta.validation.Valid;
@@ -27,6 +29,13 @@ public class AuthController {
 
         UserResponseDTO response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
+        LoginResponse response = authService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 
 }
