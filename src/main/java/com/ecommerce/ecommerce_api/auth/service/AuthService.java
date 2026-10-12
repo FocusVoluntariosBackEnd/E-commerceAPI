@@ -10,33 +10,30 @@ import com.ecommerce.ecommerce_api.user.entity.User;
 import com.ecommerce.ecommerce_api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
     private final UserRepository userRepository;
-    private final PasswordEncoder encoder;
+    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public UserResponseDTO register(RegisterRequestDTO requestDTO) {
         String email = requestDTO.email().trim().toLowerCase();
-
-        if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException();
-        }
-
         User user = new User(
                 requestDTO.name().trim(),
                 email,
-                encoder.encode(requestDTO.password())
+                passwordEncoder.encode(requestDTO.password())
         );
 
         User savedUser;
         try {
             savedUser = userRepository.save(user);
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException ex) {
             throw new EmailAlreadyExistsException();
         }
 
@@ -49,11 +46,14 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("User not found."));
+        String email = request.email().trim().toLowerCase();
 
-        if (!encoder.matches(request.password(), user.getPassword()))
-            throw new RuntimeException("Invalid credentials.");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials."));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BadCredentialsException("Invalid credentials.");
+        }
 
         String jwt = jwtService.generateToken(user);
 

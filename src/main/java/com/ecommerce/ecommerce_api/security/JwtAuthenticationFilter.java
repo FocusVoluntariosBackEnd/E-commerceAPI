@@ -23,10 +23,11 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -34,34 +35,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        filterChain.doFilter(request, response);
-        return;
-    }
-
-    String jwt = authHeader.substring(7);
-
-    try {
-        Claims claims = jwtService.extractClaims(jwt);
-        String subject = claims.getSubject();
-
-        User user = userRepository.findById(UUID.fromString(subject))
-                .orElse(null);
-
-        if (user != null) {
-            var auth = new UsernamePasswordAuthenticationToken(
-                    user,
-                    null,
-                    Collections.emptyList());
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-    } catch (JwtException ex) {
-        log.debug(
-                "[INVALID JWT]: message={}",
-                ex.getMessage()
-        );
-    }
+
+        String jwt = authHeader.substring(7);
+
+        try {
+            Claims claims = jwtService.extractClaims(jwt);
+            String subject = claims.getSubject();
+
+            User user = userRepository.findById(UUID.fromString(subject))
+                    .orElse(null);
+
+            if (user != null) {
+                var auth = new UsernamePasswordAuthenticationToken(
+                        user,
+                        null,
+                        Collections.emptyList());
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        } catch (JwtException | IllegalArgumentException ex) {
+            log.debug("[INVALID JWT]: message={}", ex.getMessage());
+        }
+
         filterChain.doFilter(request, response);
     }
 }
