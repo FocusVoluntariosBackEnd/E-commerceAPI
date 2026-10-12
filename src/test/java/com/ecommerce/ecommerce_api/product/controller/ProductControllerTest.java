@@ -2,13 +2,17 @@ package com.ecommerce.ecommerce_api.product.controller;
 
 import com.ecommerce.ecommerce_api.product.dto.ProductResponse;
 import com.ecommerce.ecommerce_api.product.service.ProductService;
+import com.ecommerce.ecommerce_api.security.JwtAuthenticationEntryPoint;
+import com.ecommerce.ecommerce_api.security.JwtService;
 import com.ecommerce.ecommerce_api.security.SecurityConfig;
+import com.ecommerce.ecommerce_api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
+@WithMockUser
 class ProductControllerTest {
 
     private static final String CATEGORY_ID = "11111111-1111-1111-1111-111111111111";
@@ -34,6 +39,12 @@ class ProductControllerTest {
 
     @MockitoBean
     private ProductService service;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     private String body(String name, String price, String stock, String categoryId) {
         return """
