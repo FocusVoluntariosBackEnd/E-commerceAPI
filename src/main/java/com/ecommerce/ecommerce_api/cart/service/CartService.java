@@ -6,6 +6,7 @@ import com.ecommerce.ecommerce_api.cart.dto.UpdateCartItemQuantityRequest;
 import com.ecommerce.ecommerce_api.cart.entity.Cart;
 import com.ecommerce.ecommerce_api.cart.entity.CartItem;
 import com.ecommerce.ecommerce_api.cart.repository.CartRepository;
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
 import com.ecommerce.ecommerce_api.product.dto.UpdateProductRequest;
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.product.repository.ProductRepository;
@@ -30,7 +31,7 @@ public class CartService {
                 .orElseGet(() -> createCart(userId));
 
         Product product = productRepository.findByIdAndActiveTrue(request.productId())
-                .orElseThrow(() -> new RuntimeException("Product not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         cart.addItem(product, request.quantity());
 
@@ -42,10 +43,10 @@ public class CartService {
     @Transactional
     public CartResponse updateQuantityCartItem(UUID userId, UUID productId, UpdateCartItemQuantityRequest request) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found."));
 
         Product product = productRepository.findByIdAndActiveTrue(productId)
-                        .orElseThrow(() -> new RuntimeException("Product not found."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         cart.updateQuantityItem(product, request.quantity());
 
@@ -65,10 +66,10 @@ public class CartService {
     @Transactional
     public void removeItem(UUID userId, UUID productId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found."));
 
         Product product = productRepository.findByIdAndActiveTrue(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         cart.removeItem(product);
 
@@ -77,7 +78,7 @@ public class CartService {
 
     private Cart createCart(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
         return cartRepository.save(new Cart(user));
     }

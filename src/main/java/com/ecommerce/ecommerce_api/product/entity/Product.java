@@ -1,6 +1,7 @@
 package com.ecommerce.ecommerce_api.product.entity;
 
 import com.ecommerce.ecommerce_api.category.entity.Category;
+import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -66,10 +67,10 @@ public class Product {
 
     public void updateProduct(String name, String description, BigDecimal price, int stock, Category category, long requestVersion) {
         if (!this.active)
-            throw new IllegalStateException("This product is inactive and cannot be updated.");
+            throw new BusinessRuleException("This product is inactive and cannot be updated.");
 
         if (this.version != requestVersion)
-            throw new IllegalStateException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
+            throw new OptimisticLockException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
 
         this.name = name;
         this.description = description;

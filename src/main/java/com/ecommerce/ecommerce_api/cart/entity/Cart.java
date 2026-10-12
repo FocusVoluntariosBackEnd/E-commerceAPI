@@ -1,5 +1,7 @@
 package com.ecommerce.ecommerce_api.cart.entity;
 
+import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
@@ -47,13 +49,13 @@ public class Cart {
                     int newQuantity = existingItem.getQuantity() + quantity;
 
                     if (!product.isStockAvailable(newQuantity))
-                        throw new RuntimeException("Insufficient stock to add to cart.");
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
 
                     existingItem.updateQuantity(newQuantity);
                 },
                 () -> {
                     if (!product.isStockAvailable(quantity))
-                        throw new RuntimeException("Insufficient stock to add to cart.");
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
 
                     items.add(new CartItem(this, product, quantity));
                 }
@@ -64,18 +66,18 @@ public class Cart {
         findItemByProduct(product).ifPresentOrElse(
                 item -> {
                     if (!product.isStockAvailable(quantity))
-                        throw new RuntimeException("Insufficient stock to add to cart.");
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
 
                     item.updateQuantity(quantity);
                 },
-                () -> { throw new RuntimeException("Cart item not found."); }
+                () -> { throw new ResourceNotFoundException("Cart item not found."); }
         );
     }
 
     public void removeItem(Product product) {
         findItemByProduct(product).ifPresentOrElse(
                 item -> items.remove(item),
-                () -> { throw new RuntimeException("Cart item not found."); }
+                () -> { throw new ResourceNotFoundException("Cart item not found."); }
         );
     }
 
