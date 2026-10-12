@@ -1,14 +1,13 @@
 package com.ecommerce.ecommerce_api.auth.service;
 
+import com.ecommerce.ecommerce_api.exception.EmailAlreadyExistsException;
 import com.ecommerce.ecommerce_api.user.dto.RegisterRequestDTO;
 import com.ecommerce.ecommerce_api.user.dto.UserResponseDTO;
 import com.ecommerce.ecommerce_api.user.entity.User;
 import com.ecommerce.ecommerce_api.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
@@ -16,35 +15,36 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserResponseDTO register(RegisterRequestDTO requestDTO){
-        if (userRepository.existsByEmail(requestDTO.email())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já está em Uso.");
+    public UserResponseDTO register(RegisterRequestDTO requestDTO) {
+        String email = requestDTO.email().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException();
         }
 
-        String senhaCriptografada = passwordEncoder.encode(requestDTO.password());
-        System.out.println("SENHA CRIPTTOGRAFDA QUE VAI PRO BANCO" + senhaCriptografada);
-
         User user = new User(
-                requestDTO.name(),
-                requestDTO.email(),
-                senhaCriptografada
+                requestDTO.name().trim(),
+                email,
+                passwordEncoder.encode(requestDTO.password())
         );
 
-        User savedUser = userRepository.save(user);
+        User savedUser;
+        try {
+            savedUser = userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException();
+        }
+
         return new UserResponseDTO(
                 savedUser.getId(),
                 savedUser.getName(),
                 savedUser.getEmail(),
                 savedUser.getCreatedAt()
         );
-
     }
-
-
-
 }
