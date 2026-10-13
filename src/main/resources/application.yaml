@@ -2,12 +2,27 @@ spring:
   application:
     name: ecommerce-api
 
+  config:
+    import: optional:file:.env[.properties]
+
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: jdbc:postgresql://${KEY_POSTGRES_HOST:localhost}:${KEY_POSTGRES_PORT}/${KEY_POSTGRES_BD}
+    username: ${KEY_POSTGRES_USER}
+    password: ${KEY_POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+
+api:
+  security:
+    jwt:
+      secret: ${SECRET_KEY}
+      expiration-millis: ${EXPIRATION_MS}
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: method
+    persist-authorization: true

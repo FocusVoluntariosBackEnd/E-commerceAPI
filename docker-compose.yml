@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17
     container_name: ecommerceAPI_postgres
     environment:
       POSTGRES_DB: ${KEY_POSTGRES_BD}
@@ -16,6 +16,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build: .
+    container_name: ecommerceAPI_app
+    env_file: .env
+    environment:
+      KEY_POSTGRES_HOST: postgres
+      KEY_POSTGRES_PORT: 5432
+      TZ: America/Sao_Paulo
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
     driver: local

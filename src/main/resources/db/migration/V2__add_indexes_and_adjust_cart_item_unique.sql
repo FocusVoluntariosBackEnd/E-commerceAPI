@@ -1,0 +1,7 @@
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+
+ALTER TABLE cart_items DROP CONSTRAINT uk_cart_items_product_cart;
+
+ALTER TABLE cart_items ADD CONSTRAINT uk_cart_items_product_cart UNIQUE (cart_id, product_id);
