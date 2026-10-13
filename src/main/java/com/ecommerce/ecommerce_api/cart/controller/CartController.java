@@ -7,6 +7,7 @@ import com.ecommerce.ecommerce_api.cart.service.CartService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -22,42 +23,33 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CartResponse> addItem(Principal principal,
+    public ResponseEntity<CartResponse> addItem(@AuthenticationPrincipal UUID userId,
                                                 @Valid @RequestBody AddCartItemRequest request) {
-        CartResponse response = service.addItem(
-                UUID.fromString(principal.getName()),
-                request
-                );
+        CartResponse response = service.addItem(userId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<CartResponse> getCart(Principal principal) {
-        CartResponse response = service.getCart(UUID.fromString(principal.getName()));
+    public ResponseEntity<CartResponse> getCart(@AuthenticationPrincipal UUID userId) {
+        CartResponse response = service.getCart(userId);
 
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/items/{productId}")
-    public ResponseEntity<CartResponse> updateQuantityCartItem(Principal principal,
+    public ResponseEntity<CartResponse> updateQuantityCartItem(@AuthenticationPrincipal UUID userId,
                                                                @PathVariable UUID productId,
                                                                @Valid @RequestBody UpdateCartItemQuantityRequest request) {
-        CartResponse response = service.updateQuantityCartItem(
-                UUID.fromString(principal.getName()),
-                productId,
-                request
-        );
+        CartResponse response = service.updateQuantityCartItem(userId, productId, request);
 
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/items/{productId}")
-    public ResponseEntity<Void> removeItem(Principal principal, @PathVariable UUID productId) {
-        service.removeItem(UUID.fromString(
-                principal.getName()),
-                productId
-        );
+    public ResponseEntity<Void> removeItem(@AuthenticationPrincipal UUID userId,
+                                           @PathVariable UUID productId) {
+        service.removeItem(userId, productId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
