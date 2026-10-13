@@ -4,9 +4,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
@@ -52,12 +56,34 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessRuleException.class)
     public ProblemDetail handleBusinessRule(BusinessRuleException e) {
-        return buildProblemDetail(HttpStatus.CONFLICT, "Business Rule Validation Error", e.getMessage());
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Business Rule Validation Error", e.getMessage());
     }
 
     @ExceptionHandler(OptimisticLockingException.class)
     public ProblemDetail handleOptimisticLock(OptimisticLockingException e) {
         return buildProblemDetail(HttpStatus.CONFLICT, "Concurrent Modification Conflict", e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Invalid Parameter",
+                "Invalid value for parameter '" + e.getName() + "'.");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ProblemDetail handleMissingParameter(MissingServletRequestParameterException e) {
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Missing Parameter",
+                "Required parameter '" + e.getParameterName() + "' is missing.");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ProblemDetail handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return buildProblemDetail(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed", "HTTP method not supported for this endpoint.");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ProblemDetail handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException e) {
+        return buildProblemDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type", "Content type not supported. Use application/json.");
     }
 
     @ExceptionHandler(Exception.class)
