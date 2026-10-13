@@ -1,5 +1,6 @@
 package com.ecommerce.ecommerce_api.product.controller;
 
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
 import com.ecommerce.ecommerce_api.product.dto.ProductResponse;
 import com.ecommerce.ecommerce_api.product.service.ProductService;
 import com.ecommerce.ecommerce_api.security.JwtAuthenticationEntryPoint;
@@ -166,5 +167,14 @@ class ProductControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(service).delete(id);
+    }
+
+    @Test
+    void delete_whenProductNotFoundOrAlreadyInactive_shouldReturn404() throws Exception {
+        UUID id = UUID.randomUUID();
+        doThrow(new ResourceNotFoundException("Product not found.")).when(service).delete(id);
+
+        mockMvc.perform(delete("/api/products/{id}", id))
+                .andExpect(status().isNotFound());
     }
 }
