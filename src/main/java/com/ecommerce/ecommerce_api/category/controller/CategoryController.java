@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Categorias", description = "Categorias dos produtos")
 @RestController
-@RequestMapping("/categories")
+@RequestMapping("/api/categories")
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService service;
@@ -28,7 +28,8 @@ public class CategoryController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Categoria criada"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Categoria já existe", content = @Content)
     })
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@RequestBody @Valid CreateCategoryRequest request) {
