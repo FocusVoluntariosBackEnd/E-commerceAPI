@@ -30,29 +30,13 @@ public class OrderItem {
     protected OrderItem() {}
 
     public OrderItem(Order order, Product product, int quantity) {
-        if (order == null)
-            throw new IllegalArgumentException("Order can't be null");
-
         this.order = order;
-
-        if (product == null)
-            throw new IllegalArgumentException("Product can't be null");
-
         this.product = product;
-
-        if(quantity <= 0)
-            throw new IllegalArgumentException("Quantity can't be negative or 0");
-
         this.quantity = quantity;
-
         this.price = product.getPrice();
     }
 
     public BigDecimal calculateTotalPrice() {
         return price.multiply(BigDecimal.valueOf(quantity));
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
     }
 }

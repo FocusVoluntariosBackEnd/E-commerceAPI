@@ -1,5 +1,6 @@
 package com.ecommerce.ecommerce_api.order.entity;
 
+import com.ecommerce.ecommerce_api.cart.entity.CartItem;
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -31,7 +32,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus status = OrderStatus.PAID;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -40,19 +41,11 @@ public class Order {
     protected Order() {}
 
     public Order(User user) {
-        if (user == null)
-            throw new IllegalArgumentException("User can't be null");
-
         this.user = user;
     }
 
-    private void addItem(OrderItem item) {
-        if (item == null)
-            throw new IllegalArgumentException("Item can't be null");
-
-        this.items.add(item);
-
-        item.setOrder(this);
+    public void addItem(OrderItem item) {
+        items.add(item);
     }
 
     public void calculateTotalAmount() {
