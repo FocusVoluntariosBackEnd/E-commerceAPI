@@ -2,6 +2,7 @@ package com.ecommerce.ecommerce_api.product.service;
 
 import com.ecommerce.ecommerce_api.category.entity.Category;
 import com.ecommerce.ecommerce_api.category.repository.CategoryRepository;
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
 import com.ecommerce.ecommerce_api.product.dto.CreateProductRequest;
 import com.ecommerce.ecommerce_api.product.dto.ProductResponse;
 import com.ecommerce.ecommerce_api.product.entity.Product;
@@ -99,7 +100,7 @@ class ProductServiceTest {
     void delete_shouldDeactivateProductInsteadOfRemovingIt() {
         Product product = newProduct();
         UUID id = UUID.randomUUID();
-        when(productRepository.findById(id)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(product));
 
         service.delete(id);
 
@@ -109,10 +110,20 @@ class ProductServiceTest {
     @Test
     void delete_shouldFailWhenProductDoesNotExist() {
         UUID id = UUID.randomUUID();
-        when(productRepository.findById(id)).thenReturn(Optional.empty());
+        when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
 
         var ex = assertThrows(RuntimeException.class, () -> service.delete(id));
 
         assertEquals("Product not found.", ex.getMessage());
+    }
+
+    @Test
+    void delete_shouldFailWhenProductIsAlreadyInactive() {
+        UUID id = UUID.randomUUID();
+        when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.delete(id));
+
+        verify(productRepository, never()).save(any());
     }
 }
