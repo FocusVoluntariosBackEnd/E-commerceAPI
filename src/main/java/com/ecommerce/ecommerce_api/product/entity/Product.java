@@ -1,6 +1,8 @@
 package com.ecommerce.ecommerce_api.product.entity;
 
 import com.ecommerce.ecommerce_api.category.entity.Category;
+import com.ecommerce.ecommerce_api.exception.OptimisticLockingException;
+import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -8,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -59,13 +62,16 @@ public class Product {
         this.category = category;
     }
 
+    public boolean isStockAvailable(int quantity) {
+        return this.stock >= quantity;
+    }
+
     public void updateProduct(String name, String description, BigDecimal price, int stock, Category category, long requestVersion) {
         if (!this.active)
-            throw new IllegalStateException("This product is inactive and cannot be updated.");
+            throw new BusinessRuleException("This product is inactive and cannot be updated.");
 
         if (this.version != requestVersion)
-            throw new IllegalStateException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
-
+            throw new OptimisticLockingException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
         this.name = name;
         this.description = description;
         this.price = price;
@@ -75,5 +81,16 @@ public class Product {
 
     public void deleteProduct() {
         this.active = false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Product product)) return false;
+        return Objects.equals(id, product.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

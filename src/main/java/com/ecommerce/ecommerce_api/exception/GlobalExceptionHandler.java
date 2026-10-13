@@ -1,47 +1,78 @@
 package com.ecommerce.ecommerce_api.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.time.Instant;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<StandardError> handleNotFound(NoResourceFoundException e) {
-        StandardError erro = new StandardError(404, "Recurso não encontrado");
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<StandardError> handleValidation(MethodArgumentNotValidException e) {
-        StandardError erro = new StandardError(400, "Dados inválidos");
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+        ProblemDetail problemDetail = buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Invalid Request Data",
+                "There are invalid fields in the request."
+        );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+        var errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+
+        problemDetail.setProperty("invalidFields", errors);
+        return problemDetail;
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail handleNoResourceFound(NoResourceFoundException e) {
+        return buildProblemDetail(HttpStatus.NOT_FOUND, "Not Found", "Resource not found.");
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ProblemDetail handleNotFound(ResourceNotFoundException e) {
+        return buildProblemDetail(HttpStatus.NOT_FOUND, "Resource Not Found", e.getMessage());
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<StandardError> handleEmailAlreadyExists(EmailAlreadyExistsException e) {
-        StandardError erro = new StandardError(409, e.getMessage());
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException e) {
+        return buildProblemDetail(HttpStatus.CONFLICT, "Conflict", e.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<StandardError> handleBadCredentials(BadCredentialsException e) {
-        StandardError erro = new StandardError(401, "Credenciais inválidas");
+    public ProblemDetail handleBadCredentials(BadCredentialsException e) {
+        return buildProblemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials.");
+    }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
+    @ExceptionHandler(BusinessRuleException.class)
+    public ProblemDetail handleBusinessRule(BusinessRuleException e) {
+        return buildProblemDetail(HttpStatus.CONFLICT, "Business Rule Validation Error", e.getMessage());
+    }
+
+    @ExceptionHandler(OptimisticLockingException.class)
+    public ProblemDetail handleOptimisticLock(OptimisticLockingException e) {
+        return buildProblemDetail(HttpStatus.CONFLICT, "Concurrent Modification Conflict", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<StandardError> handleException(Exception e) {
-        StandardError erro = new StandardError(500, "Ocorreu um erro Interno no servidor");
+    public ProblemDetail handleInternalError(Exception ex) {
+        return buildProblemDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                "An unexpected internal server error occurred."
+        );
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(erro);
+    private ProblemDetail buildProblemDetail(HttpStatus status, String title, String detail) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+        problemDetail.setTitle(title);
+        problemDetail.setProperty("timestamp", Instant.now());
+
+        return problemDetail;
     }
 }

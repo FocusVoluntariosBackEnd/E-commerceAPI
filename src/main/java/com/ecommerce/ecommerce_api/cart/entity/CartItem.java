@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -32,29 +33,28 @@ public class CartItem {
     protected CartItem() {}
 
     public CartItem(Cart cart, Product product, int quantity) {
-        if (cart == null)
-            throw new IllegalArgumentException("Cart can't be null");
-
         this.cart = cart;
-
-        if (product == null)
-            throw new IllegalArgumentException("Product can't be null");
-
         this.product = product;
-
-        if (quantity <= 0)
-            throw new IllegalArgumentException("Quantity can't be negative or 0");
-
         this.quantity = quantity;
-
         this.unitPrice = product.getPrice();
     }
 
-    public void setCart(Cart cart) {
-        this.cart = cart;
+    public void updateQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CartItem cartItem)) return false;
+        return Objects.equals(id, cartItem.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

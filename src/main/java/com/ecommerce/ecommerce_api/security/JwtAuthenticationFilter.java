@@ -46,12 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtService.extractClaims(jwt);
             String subject = claims.getSubject();
 
-            User user = userRepository.findById(UUID.fromString(subject))
-                    .orElse(null);
+            UUID userId = UUID.fromString(subject);
 
-            if (user != null) {
+            if (userRepository.existsById(userId)) {
                 var auth = new UsernamePasswordAuthenticationToken(
-                        user,
+                        userId,
                         null,
                         Collections.emptyList());
 

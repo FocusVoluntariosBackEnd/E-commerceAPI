@@ -1,5 +1,8 @@
 package com.ecommerce.ecommerce_api.cart.entity;
 
+import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
+import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,9 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "carts")
@@ -35,22 +36,61 @@ public class Cart {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    protected Cart() {}
+    protected Cart() {
+    }
 
     public Cart(User user) {
-        if (user == null)
-            throw new IllegalArgumentException("User can't be null");
-
         this.user = user;
     }
 
-    public void AddItem(CartItem item) {
-        if (item == null)
-            throw new IllegalArgumentException("Item can't be null");
+    public void addItem(Product product, int quantity) {
+        findItemByProduct(product).ifPresentOrElse(
+                existingItem -> {
+                    int newQuantity = existingItem.getQuantity() + quantity;
 
-        this.items.add(item);
+                    if (!product.isStockAvailable(newQuantity))
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
 
-        item.setCart(this);
+                    existingItem.updateQuantity(newQuantity);
+                },
+                () -> {
+                    if (!product.isStockAvailable(quantity))
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
+
+                    items.add(new CartItem(this, product, quantity));
+                }
+        );
+    }
+
+    public void updateQuantityItem(Product product, int quantity) {
+        findItemByProduct(product).ifPresentOrElse(
+                item -> {
+                    if (!product.isStockAvailable(quantity))
+                        throw new BusinessRuleException("Insufficient stock to add to cart.");
+
+                    item.updateQuantity(quantity);
+                },
+                () -> { throw new ResourceNotFoundException("Cart item not found."); }
+        );
+    }
+
+    public void removeItem(UUID productId) {
+        CartItem item = items.stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found."));
+
+        items.remove(item);
+    }
+
+    private Optional<CartItem> findItemByProduct(Product product) {
+        return items.stream()
+                .filter(i -> i.getProduct().equals(product))
+                .findFirst();
+    }
+
+    public List<CartItem> getItems() {
+        return Collections.unmodifiableList(items);
     }
 
     public BigDecimal getTotal() {
