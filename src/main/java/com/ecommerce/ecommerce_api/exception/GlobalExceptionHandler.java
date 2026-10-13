@@ -49,6 +49,11 @@ public class GlobalExceptionHandler {
         return buildProblemDetail(HttpStatus.CONFLICT, "Conflict", e.getMessage());
     }
 
+    @ExceptionHandler(CategoryAlreadyExistsException.class)
+    public ProblemDetail handleCategoryAlreadyExists(CategoryAlreadyExistsException e) {
+        return buildProblemDetail(HttpStatus.CONFLICT, "Conflict", e.getMessage());
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException e) {
         return buildProblemDetail(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials.");
