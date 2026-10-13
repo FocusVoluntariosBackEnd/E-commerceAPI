@@ -2,6 +2,7 @@ package com.ecommerce.ecommerce_api.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -66,6 +67,11 @@ public class GlobalExceptionHandler {
                 "Internal Server Error",
                 "An unexpected internal server error occurred."
         );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleNotReadable(HttpMessageNotReadableException e) {
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Malformed Request", "Request body is missing or malformed.");
     }
 
     private ProblemDetail buildProblemDetail(HttpStatus status, String title, String detail) {
