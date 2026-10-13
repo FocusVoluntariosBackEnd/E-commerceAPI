@@ -1,4 +1,4 @@
-package com.ecommerce.ecommerce_api.order.service;
+package com.ecommerce.ecommerce_api.order.controller;
 
 import com.ecommerce.ecommerce_api.cart.entity.Cart;
 import com.ecommerce.ecommerce_api.cart.repository.CartRepository;
@@ -7,6 +7,7 @@ import com.ecommerce.ecommerce_api.category.repository.CategoryRepository;
 import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
 import com.ecommerce.ecommerce_api.order.dto.OrderResponse;
 import com.ecommerce.ecommerce_api.order.entity.OrderStatus;
+import com.ecommerce.ecommerce_api.order.service.ProcessCheckoutUseCase;
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.product.repository.ProductRepository;
 import com.ecommerce.ecommerce_api.user.entity.User;
