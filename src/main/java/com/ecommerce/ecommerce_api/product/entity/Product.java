@@ -1,6 +1,7 @@
 package com.ecommerce.ecommerce_api.product.entity;
 
 import com.ecommerce.ecommerce_api.category.entity.Category;
+import com.ecommerce.ecommerce_api.exception.OptimisticLockingException;
 import com.ecommerce.ecommerce_api.exception.BusinessRuleException;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -70,8 +71,7 @@ public class Product {
             throw new BusinessRuleException("This product is inactive and cannot be updated.");
 
         if (this.version != requestVersion)
-            throw new OptimisticLockException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
-
+            throw new OptimisticLockingException("Conflict detected: This product was modified by another user. Please refresh the page and try again.");
         this.name = name;
         this.description = description;
         this.price = price;

@@ -68,10 +68,7 @@ public class CartService {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found."));
 
-        Product product = productRepository.findByIdAndActiveTrue(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
-
-        cart.removeItem(product);
+        cart.removeItem(productId);
 
         cartRepository.save(cart);
     }

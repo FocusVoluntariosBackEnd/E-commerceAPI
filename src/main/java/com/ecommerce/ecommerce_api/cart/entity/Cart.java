@@ -74,11 +74,13 @@ public class Cart {
         );
     }
 
-    public void removeItem(Product product) {
-        findItemByProduct(product).ifPresentOrElse(
-                item -> items.remove(item),
-                () -> { throw new ResourceNotFoundException("Cart item not found."); }
-        );
+    public void removeItem(UUID productId) {
+        CartItem item = items.stream()
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found."));
+
+        items.remove(item);
     }
 
     private Optional<CartItem> findItemByProduct(Product product) {
