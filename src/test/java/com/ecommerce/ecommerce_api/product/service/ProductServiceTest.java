@@ -97,6 +97,26 @@ class ProductServiceTest {
 
 
     @Test
+    void getById_shouldReturnActiveProduct() {
+        Product product = newProduct();
+        UUID id = UUID.randomUUID();
+        when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(product));
+
+        ProductResponse response = service.getById(id);
+
+        assertEquals("Mouse", response.name());
+        assertEquals("Eletrônicos", response.categoryName());
+    }
+
+    @Test
+    void getById_shouldFailWhenProductDoesNotExistOrIsInactive() {
+        UUID id = UUID.randomUUID();
+        when(productRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getById(id));
+    }
+
+    @Test
     void delete_shouldDeactivateProductInsteadOfRemovingIt() {
         Product product = newProduct();
         UUID id = UUID.randomUUID();

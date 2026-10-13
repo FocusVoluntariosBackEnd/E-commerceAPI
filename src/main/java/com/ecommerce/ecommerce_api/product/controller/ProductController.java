@@ -61,14 +61,28 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Detalhar produto", description = "Retorna os detalhes de um produto ativo. Rota pública.")
+    @SecurityRequirements
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto encontrado"),
+            @ApiResponse(responseCode = "400", description = "ID inválido", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado ou inativo", content = @Content)
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> getById(@PathVariable UUID id) {
+        ProductResponse response = service.getById(id);
+
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Atualizar produto",
             description = "Exige a version atual do produto (controle de concorrência otimista).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content),
             @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Produto ou categoria não encontrado", content = @Content),
-            @ApiResponse(responseCode = "409", description = "Produto inativo ou alterado por outro usuário", content = @Content)
+            @ApiResponse(responseCode = "404", description = "Produto (ou produto inativo) ou categoria não encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Produto alterado por outro usuário (version desatualizada)", content = @Content)
     })
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> update(@PathVariable UUID id,
