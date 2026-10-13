@@ -1,6 +1,7 @@
 package com.ecommerce.ecommerce_api.product.dto;
 
 import com.ecommerce.ecommerce_api.product.entity.Product;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -8,11 +9,11 @@ import java.util.UUID;
 
 public record ProductResponse(
         UUID id,
-        String name,
-        String description,
-        BigDecimal price,
-        int stock,
-        String categoryName,
+        @Schema(example = "Notebook") String name,
+        @Schema(example = "Notebook para estudos") String description,
+        @Schema(example = "3500.00") BigDecimal price,
+        @Schema(example = "10") int stock,
+        @Schema(example = "ELETRÔNICOS") String categoryName,
         Instant createdAt,
         Instant updatedAt
 ) {
