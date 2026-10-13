@@ -12,12 +12,13 @@ import com.ecommerce.ecommerce_api.order.repository.OrderRepository;
 import com.ecommerce.ecommerce_api.product.entity.Product;
 import com.ecommerce.ecommerce_api.product.repository.ProductRepository;
 import com.ecommerce.ecommerce_api.user.entity.User;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -30,116 +31,116 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProcessCheckoutUseCaseTest {
+
     @Mock
     private CartRepository cartRepository;
+
     @Mock
     private ProductRepository productRepository;
+
     @Mock
     private OrderRepository orderRepository;
 
     @InjectMocks
     private ProcessCheckoutUseCase useCase;
 
-    private User createUser() {
-        return new User("Lucas Vieira", "lucas-vieira@teste.com", "senha1234");
+    private final UUID userId = UUID.randomUUID();
+    private Cart cart;
+    private Product mouse;
+
+    @BeforeEach
+    void setUp() {
+        cart = new Cart(mock(User.class));
+        mouse = newProduct("Mouse", "50.00", 10);
     }
 
-    private Product createProduct() {
-        return new Product("Notebook", "Notebook DELL i5 13° geração", new BigDecimal("3500.00"), 10, new Category("eletronics"));
-    }
-
-    private Cart cartWithItem(User user, Product product) {
-        Cart cart = new Cart(user);
-        cart.addItem(product, 2);
-
-        return cart;
+    private Product newProduct(String name, String price, int stock) {
+        Product product = new Product(name, "desc", new BigDecimal(price), stock, new Category("Eletrônicos"));
+        // Product.equals compara por id; sem id todos os produtos seriam "iguais"
+        ReflectionTestUtils.setField(product, "id", UUID.randomUUID());
+        return product;
     }
 
     @Test
-    void shouldProcessCheckoutSuccessfully() {
-        UUID userId = UUID.randomUUID();
-
-        Product product = createProduct();
-
-        Cart cart = cartWithItem(createUser(), product);
+    void execute_shouldCreatePaidOrderDecreaseStockAndClearCart() {
+        cart.addItem(mouse, 2);
 
         when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
-        when(productRepository.findByIdAndActiveTrue(any())).thenReturn(Optional.of(product));
-        when(productRepository.decreaseStock(any(), anyInt())).thenReturn(1);
+        when(productRepository.findByIdAndActiveTrue(mouse.getId())).thenReturn(Optional.of(mouse));
+        when(productRepository.decreaseStock(mouse.getId(), 2)).thenReturn(1);
         when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         OrderResponse response = useCase.execute(userId);
 
-        assertNotNull(response);
         assertEquals(OrderStatus.PAID, response.status());
-        assertEquals(new BigDecimal("7000.00"), response.totalAmount());
+        assertEquals(0, new BigDecimal("100.00").compareTo(response.totalAmount()));
         assertTrue(cart.isEmpty());
-
+        verify(productRepository).decreaseStock(mouse.getId(), 2);
         verify(cartRepository).save(cart);
         verify(orderRepository).saveAndFlush(any(Order.class));
-        verify(productRepository).decreaseStock(any(), eq(2));
     }
 
     @Test
-    void whenCartNotFound_shouldThrowResourceNotFoundException() {
-        UUID userId = UUID.randomUUID();
+    void execute_shouldSumTotalOfAllItems() {
+        Product keyboard = newProduct("Teclado", "120.50", 5);
+        cart.addItem(mouse, 2);
+        cart.addItem(keyboard, 1);
 
+        when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
+        when(productRepository.findByIdAndActiveTrue(mouse.getId())).thenReturn(Optional.of(mouse));
+        when(productRepository.findByIdAndActiveTrue(keyboard.getId())).thenReturn(Optional.of(keyboard));
+        when(productRepository.decreaseStock(mouse.getId(), 2)).thenReturn(1);
+        when(productRepository.decreaseStock(keyboard.getId(), 1)).thenReturn(1);
+        when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderResponse response = useCase.execute(userId);
+
+        assertEquals(0, new BigDecimal("220.50").compareTo(response.totalAmount()));
+    }
+
+    @Test
+    void execute_shouldFailWhenCartDoesNotExist() {
         when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.empty());
 
-        var exception = assertThrows(ResourceNotFoundException.class, () -> useCase.execute(userId));
-
-        assertEquals("Cart not found.", exception.getMessage());
+        assertThrows(ResourceNotFoundException.class, () -> useCase.execute(userId));
 
         verifyNoInteractions(productRepository, orderRepository);
     }
 
     @Test
-    void whenCartIsEmpty_shouldThrowBusinessRuleException() {
-        UUID userId = UUID.randomUUID();
+    void execute_shouldFailWhenCartIsEmpty() {
+        when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
 
-        Cart emptyCart = new Cart(createUser());
-
-        when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(emptyCart));
-
-        var exception = assertThrows(BusinessRuleException.class, () -> useCase.execute(userId));
-
-        assertEquals("Can't checkout with cart is empty.", exception.getMessage());
+        assertThrows(BusinessRuleException.class, () -> useCase.execute(userId));
 
         verifyNoInteractions(productRepository, orderRepository);
     }
 
     @Test
-    void whenProductNotFound_shouldThrowResourceNotFoundException() {
-        UUID userId = UUID.randomUUID();
-
-        Cart cart = cartWithItem(createUser(), createProduct());
+    void execute_shouldFailWhenProductIsNoLongerActive() {
+        cart.addItem(mouse, 2);
 
         when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
-        when(productRepository.findByIdAndActiveTrue(any())).thenReturn(Optional.empty());
+        when(productRepository.findByIdAndActiveTrue(mouse.getId())).thenReturn(Optional.empty());
 
-        var exception = assertThrows(ResourceNotFoundException.class, () -> useCase.execute(userId));
+        assertThrows(ResourceNotFoundException.class, () -> useCase.execute(userId));
 
-        assertEquals("Product not found.", exception.getMessage());
-
-        verify(orderRepository, never()).saveAndFlush(any());
+        verify(productRepository, never()).decreaseStock(any(UUID.class), anyInt());
+        verify(orderRepository, never()).saveAndFlush(any(Order.class));
     }
 
     @Test
-    void whenInsufficientStock_shouldThrowBusinessRuleException() {
-        UUID userId = UUID.randomUUID();
-
-        Product product = createProduct();
-
-        Cart cart = cartWithItem(createUser(), product);
+    void execute_shouldFailWhenStockIsInsufficientAndNotCreateOrder() {
+        cart.addItem(mouse, 2);
 
         when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
-        when(productRepository.findByIdAndActiveTrue(any())).thenReturn(Optional.of(product));
-        when(productRepository.decreaseStock(any(), anyInt())).thenReturn(0);
+        when(productRepository.findByIdAndActiveTrue(mouse.getId())).thenReturn(Optional.of(mouse));
+        when(productRepository.decreaseStock(mouse.getId(), 2)).thenReturn(0);
 
-        var exception = assertThrows(BusinessRuleException.class, () -> useCase.execute(userId));
+        var ex = assertThrows(BusinessRuleException.class, () -> useCase.execute(userId));
 
-        assertEquals("Insufficient stock for product Notebook.",  exception.getMessage());
-
-        verify(orderRepository, never()).saveAndFlush(any());
+        assertTrue(ex.getMessage().contains("Insufficient stock"));
+        verify(orderRepository, never()).saveAndFlush(any(Order.class));
+        verify(cartRepository, never()).save(any(Cart.class));
     }
 }

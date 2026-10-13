@@ -58,6 +58,14 @@ public class ProductService {
         return products.map(ProductResponse::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public ProductResponse getById(UUID id) {
+        Product product = productRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
+
+        return ProductResponse.toResponse(product);
+    }
+
     @Transactional
     public ProductResponse update(UUID id, UpdateProductRequest request) {
         Product product = productRepository.findById(id)
@@ -82,7 +90,7 @@ public class ProductService {
 
     @Transactional
     public void delete(UUID id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         product.deleteProduct();

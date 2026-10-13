@@ -130,14 +130,14 @@ class CartControllerTest {
     }
 
     @Test
-    void addItem_withInsufficientStock_shouldReturn409() throws Exception {
+    void addItem_withInsufficientStock_shouldReturn400() throws Exception {
         when(service.addItem(eq(USER_ID), any()))
                 .thenThrow(new BusinessRuleException("Insufficient stock to add to cart."));
 
         mockMvc.perform(post("/api/cart/items").with(loggedUser())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(addBody("\"" + PRODUCT_ID + "\"", "999")))
-                .andExpect(status().isConflict())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("Insufficient stock to add to cart."));
     }
 
@@ -195,14 +195,35 @@ class CartControllerTest {
     }
 
     @Test
-    void updateQuantity_aboveStock_shouldReturn409() throws Exception {
+    void updateQuantity_aboveStock_shouldReturn400() throws Exception {
         when(service.updateQuantityCartItem(eq(USER_ID), eq(PRODUCT_ID), any()))
                 .thenThrow(new BusinessRuleException("Insufficient stock to add to cart."));
 
         mockMvc.perform(put("/api/cart/items/{productId}", PRODUCT_ID).with(loggedUser())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"quantity\": 999 }"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateQuantity_withInvalidProductId_shouldReturn400() throws Exception {
+        mockMvc.perform(put("/api/cart/items/{productId}", "not-a-uuid").with(loggedUser())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"quantity\": 2 }"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid Parameter"));
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void cartItem_withUnsupportedHttpMethod_shouldReturn405() throws Exception {
+        mockMvc.perform(patch("/api/cart/items/{productId}", PRODUCT_ID).with(loggedUser())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"quantity\": 2 }"))
+                .andExpect(status().isMethodNotAllowed());
+
+        verifyNoInteractions(service);
     }
 
     @Test

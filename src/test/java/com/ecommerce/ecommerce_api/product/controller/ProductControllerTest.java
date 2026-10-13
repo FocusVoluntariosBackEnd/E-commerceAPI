@@ -1,5 +1,6 @@
 package com.ecommerce.ecommerce_api.product.controller;
 
+import com.ecommerce.ecommerce_api.exception.ResourceNotFoundException;
 import com.ecommerce.ecommerce_api.product.dto.ProductResponse;
 import com.ecommerce.ecommerce_api.product.service.ProductService;
 import com.ecommerce.ecommerce_api.security.JwtAuthenticationEntryPoint;
@@ -12,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -159,6 +161,54 @@ class ProductControllerTest {
 
 
     @Test
+    @WithAnonymousUser
+    void list_withoutAuthentication_shouldReturn200() throws Exception {
+        when(service.list(1, 10, null)).thenReturn(new PageImpl<>(List.of(sampleResponse())));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getById_withoutAuthentication_shouldReturn200() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(service.getById(id)).thenReturn(sampleResponse());
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Mouse"));
+    }
+
+    @Test
+    void getById_whenNotFoundOrInactive_shouldReturn404() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(service.getById(id)).thenThrow(new ResourceNotFoundException("Product not found."));
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getById_withInvalidId_shouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/products/{id}", "not-a-uuid"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void create_withoutAuthentication_shouldReturn401() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("\"Mouse\"", "59.90", "10", "\"" + CATEGORY_ID + "\"")))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
     void delete_shouldReturn204() throws Exception {
         UUID id = UUID.randomUUID();
 
@@ -166,5 +216,14 @@ class ProductControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(service).delete(id);
+    }
+
+    @Test
+    void delete_whenProductNotFoundOrAlreadyInactive_shouldReturn404() throws Exception {
+        UUID id = UUID.randomUUID();
+        doThrow(new ResourceNotFoundException("Product not found.")).when(service).delete(id);
+
+        mockMvc.perform(delete("/api/products/{id}", id))
+                .andExpect(status().isNotFound());
     }
 }
