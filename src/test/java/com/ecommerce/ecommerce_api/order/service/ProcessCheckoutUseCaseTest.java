@@ -135,7 +135,6 @@ class ProcessCheckoutUseCaseTest {
 
         when(cartRepository.findByUserIdWithItems(userId)).thenReturn(Optional.of(cart));
         when(productRepository.findByIdAndActiveTrue(mouse.getId())).thenReturn(Optional.of(mouse));
-        // outro comprador levou o estoque: o UPDATE condicional não afeta nenhuma linha
         when(productRepository.decreaseStock(mouse.getId(), 2)).thenReturn(0);
 
         var ex = assertThrows(BusinessRuleException.class, () -> useCase.execute(userId));
