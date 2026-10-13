@@ -89,6 +89,14 @@ public class Cart {
                 .findFirst();
     }
 
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
+
+    public void clear() {
+        items.clear();
+    }
+
     public List<CartItem> getItems() {
         return Collections.unmodifiableList(items);
     }
