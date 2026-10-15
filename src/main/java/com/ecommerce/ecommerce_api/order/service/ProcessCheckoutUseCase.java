@@ -52,7 +52,7 @@ public class ProcessCheckoutUseCase {
     }
 
     private void convertItems(Cart cart, Order order) {
-        for (CartItem cartItem : cart.getItems()) {
+        for (CartItem cartItem : cart.getItemsSortedByProductId()) {
             Product product = productRepository.findByIdAndActiveTrue(cartItem.getProduct().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
