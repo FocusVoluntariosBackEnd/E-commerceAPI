@@ -14,6 +14,7 @@ public record ProductResponse(
         @Schema(example = "3500.00") BigDecimal price,
         @Schema(example = "10") int stock,
         @Schema(example = "ELETRÔNICOS") String categoryName,
+        long version,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -25,6 +26,7 @@ public record ProductResponse(
                 product.getPrice(),
                 product.getStock(),
                 product.getCategory().getName(),
+                product.getVersion(),
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
