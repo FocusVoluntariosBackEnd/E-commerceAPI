@@ -68,7 +68,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse update(UUID id, UpdateProductRequest request) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         Category category = categoryRepository.findById(request.categoryId())
