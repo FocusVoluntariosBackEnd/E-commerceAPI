@@ -62,7 +62,7 @@ class ProductControllerTest {
 
     private ProductResponse sampleResponse() {
         return new ProductResponse(UUID.randomUUID(), "Mouse", "desc", new BigDecimal("59.90"),
-                10, "Eletrônicos", Instant.now(), Instant.now());
+                10, "Eletrônicos", 1, Instant.now(), Instant.now());
     }
 
 

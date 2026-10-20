@@ -101,6 +101,12 @@ public class Cart {
         return Collections.unmodifiableList(items);
     }
 
+    public List<CartItem> getItemsSortedByProductId() {
+        return items.stream()
+                .sorted(Comparator.comparing(i -> i.getProduct().getId()))
+                .toList();
+    }
+
     public BigDecimal getTotal() {
         return items.stream()
                 .map(CartItem::getSubtotal)
